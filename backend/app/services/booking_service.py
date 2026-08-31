@@ -96,7 +96,12 @@ def create_booking(db: Session, user: models.User, payload: schemas.BookingCreat
     db.flush()
 
     for (seat, fare), passenger_in in zip(reserved, payload.passengers):
-        passenger = models.Passenger(booking_id=booking.id, **passenger_in.model_dump())
+        passenger_data = passenger_in.model_dump()
+        # Chair-car seats have no berth level — ignore any berth preference the
+        # client sent so we never store a meaningless value for them.
+        if seat.seat_type == models.SeatType.SEAT:
+            passenger_data["berth_preference"] = models.BerthPreference.NO_PREFERENCE
+        passenger = models.Passenger(booking_id=booking.id, **passenger_data)
         db.add(passenger)
         db.flush()
         db.add(
