@@ -48,7 +48,7 @@ export default function Layout() {
       <header className="sticky top-0 z-30 border-b border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-surface)_88%,transparent)] backdrop-blur">
         <div className="container-page flex h-16 items-center justify-between">
           <Logo />
-          <nav className="hidden items-center gap-1 md:flex">
+          <nav className="hidden items-center gap-1 lg:flex">
             {(user?.role === "ADMIN"
               ? [...NAV, { to: "/admin", label: "Admin", icon: IconHome, end: false }]
               : NAV
@@ -132,59 +132,67 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="container-page flex-1 py-6 pb-28 md:py-10 md:pb-14">
+      <main className="container-page flex-1 py-6 pb-32 lg:py-10 lg:pb-14">
         <Outlet />
       </main>
 
-      {/* Mobile bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-line)] bg-[var(--color-surface)] safe-bottom md:hidden">
-        <div className="mx-auto flex max-w-md items-stretch justify-around px-2 pt-1.5">
-          {NAV.map((n) => {
-            const active = n.end
-              ? loc.pathname === "/"
-              : loc.pathname.startsWith(n.to);
+      {/* Floating glass dock (mobile / tablet) */}
+      <div className="dock lg:hidden">
+        <nav className="glass-panel mx-auto flex max-w-sm items-center justify-around gap-0.5 rounded-[1.6rem] p-1.5">
+          {DOCK.map((n) => {
+            const active =
+              n.to === "/"
+                ? loc.pathname === "/"
+                : loc.pathname.startsWith(n.to);
             const Icon = n.icon;
             return (
               <Link
                 key={n.to}
                 to={n.to}
-                className={`flex flex-1 flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-[11px] font-medium ${
-                  active ? "text-[var(--color-ink)]" : "text-[var(--color-muted)]"
-                }`}
+                aria-current={active ? "page" : undefined}
+                className="flex flex-1 flex-col items-center gap-0.5 rounded-[1.1rem] py-1 text-[10px] font-semibold"
               >
                 <span
-                  className={`grid h-8 w-full max-w-[3.5rem] place-items-center rounded-full transition ${
-                    active ? "bg-[var(--color-accent)]" : ""
+                  className={`grid h-9 w-full max-w-[2.9rem] place-items-center rounded-full transition ${
+                    active
+                      ? "bg-[var(--color-accent)] text-[var(--color-accent-ink)] shadow-[0_4px_14px_-4px_rgba(201,242,77,0.9)]"
+                      : "text-[var(--color-muted)]"
                   }`}
                 >
-                  <Icon className="h-5 w-5" />
+                  {n.to === "/account" && !active ? (
+                    <span className="grid h-6 w-6 place-items-center rounded-full bg-black/[0.07] text-[11px] font-bold text-[var(--color-ink)]">
+                      {initial}
+                    </span>
+                  ) : (
+                    <Icon className="h-5 w-5" />
+                  )}
                 </span>
-                {n.label}
+                <span className={active ? "text-[var(--color-ink)]" : "text-[var(--color-muted)]"}>
+                  {n.label}
+                </span>
               </Link>
             );
           })}
-          <Link
-            to="/account"
-            className={`flex flex-1 flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-[11px] font-medium ${
-              loc.pathname.startsWith("/account")
-                ? "text-[var(--color-ink)]"
-                : "text-[var(--color-muted)]"
-            }`}
-          >
-            <span
-              className={`grid h-8 w-full max-w-[3.5rem] place-items-center rounded-full text-xs font-bold ${
-                loc.pathname.startsWith("/account")
-                  ? "bg-[var(--color-accent)] text-[var(--color-accent-ink)]"
-                  : "bg-black/[0.06]"
-              }`}
-            >
-              {initial}
-            </span>
-            Account
-          </Link>
-        </div>
-      </nav>
+        </nav>
+      </div>
     </div>
+  );
+}
+
+const DOCK = [
+  { to: "/", label: "Home", icon: IconHome },
+  { to: "/book", label: "Book", icon: IconTrain },
+  { to: "/trips", label: "Trips", icon: IconTicket },
+  { to: "/feedback", label: "Feedback", icon: IconChat },
+  { to: "/account", label: "Account", icon: IconUser },
+];
+
+function IconUser({ className = "" }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none">
+      <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
   );
 }
 

@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { ApiError } from "../lib/api";
 import { Alert, Button } from "../components/ui";
-import ImagePlaceholder from "../components/ImagePlaceholder";
+import loginImg from "../assets/login.png";
 
 export default function Login() {
   const { login, register, sessionExpired, clearExpired } = useAuth();
@@ -59,7 +59,11 @@ export default function Login() {
               every screen.
             </p>
             <div className="mt-6">
-              <ImagePlaceholder label="Lifestyle / train photo" aspect="16/9" dark rounded="rounded-2xl" />
+              <img
+                src={loginImg}
+                alt="RailEase Login"
+                className="w-full h-auto rounded-2xl object-cover"
+              />
             </div>
           </div>
           <p className="text-xs text-white/40">Indian Railways · demo build</p>

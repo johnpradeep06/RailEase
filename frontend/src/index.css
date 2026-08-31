@@ -194,6 +194,41 @@
   }
 
   .hairline { border-color: var(--color-line); }
+
+  /* Frosted-glass surface for the floating dock + seat CTA */
+  .glass-panel {
+    background: color-mix(in srgb, var(--color-surface) 74%, transparent);
+    -webkit-backdrop-filter: blur(20px) saturate(185%);
+    backdrop-filter: blur(20px) saturate(185%);
+    border: 1px solid color-mix(in srgb, #ffffff 62%, transparent);
+    box-shadow:
+      0 12px 38px -12px rgba(13, 13, 15, 0.34),
+      0 3px 10px -3px rgba(13, 13, 15, 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass-panel { background: color-mix(in srgb, var(--color-surface) 96%, transparent); }
+  }
+
+  /* Floating bottom nav wrapper — transparent to clicks, children re-enable */
+  .dock {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 40;
+    padding: 0 0.75rem calc(0.6rem + env(safe-area-inset-bottom));
+    pointer-events: none;
+  }
+  .dock > * { pointer-events: auto; }
+
+  /* Page-action bar that must sit just above the floating dock on mobile */
+  .seat-cta {
+    position: fixed;
+    inset-inline: 0;
+    bottom: calc(6.1rem + env(safe-area-inset-bottom));
+    z-index: 40;
+    padding-inline: 0.75rem;
+  }
 }
 
 @layer utilities {

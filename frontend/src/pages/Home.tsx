@@ -11,7 +11,7 @@ import {
   type RecentSearch,
 } from "../lib/personalization";
 import { Button, Pill } from "../components/ui";
-import heroSectionImg from "../assets/hero_section.png";
+import heroSectionImg from "../assets/login.png";
 import bengaluruImg from "../assets/places/bengaluru.jpg";
 import chennaiImg from "../assets/places/chennai.png";
 import delhiImg from "../assets/places/delhi.jpg";
@@ -45,7 +45,7 @@ export default function Home() {
 
   useEffect(() => {
     setRecent(getRecentSearches());
-    api.stations().then(setStations).catch(() => {});
+    api.stations().then(setStations).catch(() => { });
     api
       .myBookings()
       .then(async (bs) => {
@@ -58,7 +58,7 @@ export default function Home() {
         });
         setSchedules(map);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const nextTrip = useMemo(() => {
@@ -270,11 +270,10 @@ function QuickAction({
   return (
     <Link
       to={to}
-      className={`card-interactive rounded-[1.25rem] border p-4 sm:p-5 ${
-        primary
-          ? "border-transparent bg-[var(--color-accent)] text-[var(--color-accent-ink)]"
-          : "border-[var(--color-line)] bg-[var(--color-surface)]"
-      }`}
+      className={`card-interactive rounded-[1.25rem] border p-4 sm:p-5 ${primary
+        ? "border-transparent bg-[var(--color-accent)] text-[var(--color-accent-ink)]"
+        : "border-[var(--color-line)] bg-[var(--color-surface)]"
+        }`}
     >
       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-black/10 text-lg">
         {primary ? "🎫" : "→"}

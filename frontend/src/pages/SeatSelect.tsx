@@ -144,7 +144,7 @@ export default function SeatSelect() {
   );
 
   return (
-    <div>
+    <div className="pb-24 lg:pb-0">
       <Stepper current={3} />
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-4">
@@ -273,11 +273,11 @@ export default function SeatSelect() {
         </div>
       </div>
 
-      {/* Mobile sticky CTA */}
-      <div className="fixed inset-x-0 bottom-[68px] z-20 border-t border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-3 lg:hidden">
-        <div className="mx-auto flex max-w-md items-center gap-3">
-          <div className="flex-1">
-            <div className="text-sm font-semibold">
+      {/* Mobile floating CTA — sits just above the glass dock */}
+      <div className="seat-cta lg:hidden">
+        <div className="glass-panel mx-auto flex max-w-md items-center gap-3 rounded-2xl px-4 py-2.5">
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-bold">
               {selected.length} seat{selected.length === 1 ? "" : "s"} · {inr(total)}
             </div>
             <div className="truncate text-xs text-[var(--color-muted)]">
@@ -285,8 +285,17 @@ export default function SeatSelect() {
                 "Pick a coach, then seats"}
             </div>
           </div>
-          <Button size="sm" disabled={!canContinue} onClick={cont}>
-            Passengers →
+          <Button
+            size="sm"
+            disabled={!canContinue}
+            onClick={cont}
+            className="shrink-0 disabled:!opacity-100 disabled:!bg-[var(--color-line-strong)] disabled:!text-[var(--color-muted)] disabled:!shadow-none"
+          >
+            {canContinue
+              ? "Passengers →"
+              : selected.length
+                ? "Set stops"
+                : "Pick seats"}
           </Button>
         </div>
       </div>
