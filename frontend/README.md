@@ -26,9 +26,26 @@ Demo login: `user@railease.test` / `user12345`.
 npm run build      # tsc -b && vite build  ->  dist/
 ```
 
-Serve `dist/` with the API reachable at `/api` (reverse proxy), or change
-`BASE` in `src/lib/api.ts` to the API origin and add that frontend origin to
-the backend's `FRONTEND_ORIGINS`.
+## Deploy (Vercel)
+
+`vercel.json` rewrites `/api/*` to the Railway backend, so the browser stays
+same-origin and no CORS / env vars are needed.
+
+**CLI** (from `frontend/`):
+
+```bash
+npm i -g vercel
+vercel login
+vercel --prod        # first run: set project name, framework = Vite, keep defaults
+```
+
+**Dashboard**: import `github.com/johnpradeep06/RailEase`, set **Root Directory**
+to `frontend`. Framework (Vite), build (`npm run build`) and output (`dist`) are
+auto-detected. `vercel.json` handles the API proxy.
+
+Not on Vercel? Serve `dist/` behind a proxy that maps `/api` to the backend, or
+set `BASE` in `src/lib/api.ts` to the API origin and add that origin to the
+backend's `FRONTEND_ORIGINS`.
 
 ## Image placeholders
 
