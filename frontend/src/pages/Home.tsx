@@ -113,7 +113,7 @@ export default function Home() {
             >
               <div className="grid gap-2.5 sm:grid-cols-2">
                 <select
-                  className="field !border-white/15 !bg-white/10 !text-white [&>option]:text-black"
+                  className="field [color-scheme:light]"
                   value={src}
                   onChange={(e) => setSrc(e.target.value)}
                 >
@@ -125,7 +125,7 @@ export default function Home() {
                   ))}
                 </select>
                 <select
-                  className="field !border-white/15 !bg-white/10 !text-white [&>option]:text-black"
+                  className="field [color-scheme:light]"
                   value={dst}
                   onChange={(e) => setDst(e.target.value)}
                 >
@@ -141,7 +141,7 @@ export default function Home() {
                   min={todayStr()}
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="field !border-white/15 !bg-white/10 !text-white [color-scheme:dark]"
+                  className="field [color-scheme:light]"
                 />
                 <Button type="submit" className="w-full">
                   Search trains →

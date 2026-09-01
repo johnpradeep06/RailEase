@@ -51,11 +51,13 @@ function Seat({
   selected,
   disabledAdd,
   onToggle,
+  compact = false,
 }: {
   seat: SeatMapEntry;
   selected: boolean;
   disabledAdd: boolean;
   onToggle: (s: SeatMapEntry) => void;
+  compact?: boolean;
 }) {
   const taken = seat.status === "TAKEN";
   const badge = SEAT_BADGE[seat.seat_type];
@@ -68,7 +70,9 @@ function Seat({
       onClick={() => onToggle(seat)}
       title={`${seat.seat_number} · ${seat.seat_type.replace("_", " ")}`}
       className={[
-        "relative grid h-11 w-11 shrink-0 place-items-center rounded-lg border text-[11px] font-semibold transition",
+        `relative grid shrink-0 place-items-center rounded-lg border text-[11px] font-semibold transition ${
+          compact ? "h-9 w-9 sm:h-11 sm:w-11" : "h-11 w-11"
+        }`,
         taken
           ? "cursor-not-allowed border-[var(--color-line)] bg-black/[0.06] text-[var(--color-muted)] line-through"
           : selected
@@ -146,7 +150,7 @@ export default function SeatMap({
   const openFree = openBay ? freeIn(openBay) : 0;
 
   return (
-    <div>
+    <div className="min-w-0">
       <div className="mb-4 flex flex-wrap items-center gap-4 text-xs text-[var(--color-muted)]">
         <Legend swatch="border-[var(--color-line)] bg-[var(--color-surface)]" label="Available" />
         <Legend swatch="border-[var(--color-accent-ink)] bg-[var(--color-accent)]" label="Selected" />
@@ -156,7 +160,7 @@ export default function SeatMap({
         )}
       </div>
 
-      <div className="rounded-xl border border-[var(--color-line)] bg-[var(--color-bg)] p-4">
+      <div className="overflow-hidden rounded-xl border border-[var(--color-line)] bg-[var(--color-bg)] p-4">
         <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-muted)]">
           <span className="h-px flex-1 bg-[var(--color-line)]" />
           Coach {map.coach_number} · {isChairCar ? "chair car" : "engine side"}
@@ -164,8 +168,8 @@ export default function SeatMap({
         </div>
 
         {openBay ? (
-          <div>
-            <div className="mb-4 flex flex-wrap items-center gap-3">
+          <div className="min-w-0">
+            <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1">
               <button
                 onClick={() => setOpen(null)}
                 className="flex items-center gap-1 text-sm text-[var(--color-muted)] hover:text-[var(--color-ink)]"
@@ -187,34 +191,37 @@ export default function SeatMap({
               </span>
             </div>
 
-            {isChairCar ? (
-              <div className="flex flex-col gap-2.5">
-                {openBay.rows.map(({ row, seats }) => (
-                  <div key={row} className="flex items-center gap-2">
-                    <span className="w-9 text-right text-[11px] font-medium text-[var(--color-muted)]">
-                      R{row}
-                    </span>
-                    <div className="flex gap-1.5">
-                      {seats
-                        .filter((s) => s.column_number <= aisleAfter)
-                        .map((s) => (
-                          <Seat key={s.id} {...seatProps(s)} />
-                        ))}
+            {/* seat visualisation — scrolls inside the card if a row is too wide */}
+            <div className="no-scrollbar -mx-1 overflow-x-auto px-1">
+              {isChairCar ? (
+                <div className="flex w-max flex-col gap-2.5">
+                  {openBay.rows.map(({ row, seats }) => (
+                    <div key={row} className="flex items-center gap-1.5">
+                      <span className="w-7 shrink-0 text-right text-[11px] font-medium text-[var(--color-muted)]">
+                        R{row}
+                      </span>
+                      <div className="flex gap-1.5">
+                        {seats
+                          .filter((s) => s.column_number <= aisleAfter)
+                          .map((s) => (
+                            <Seat key={s.id} {...seatProps(s)} compact />
+                          ))}
+                      </div>
+                      <span className="mx-1 self-stretch border-l border-dashed border-[var(--color-line-strong)]" />
+                      <div className="flex gap-1.5">
+                        {seats
+                          .filter((s) => s.column_number > aisleAfter)
+                          .map((s) => (
+                            <Seat key={s.id} {...seatProps(s)} compact />
+                          ))}
+                      </div>
                     </div>
-                    <span className="mx-2 self-stretch border-l border-dashed border-[var(--color-line-strong)]" />
-                    <div className="flex gap-1.5">
-                      {seats
-                        .filter((s) => s.column_number > aisleAfter)
-                        .map((s) => (
-                          <Seat key={s.id} {...seatProps(s)} />
-                        ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <BayDetail seats={openBay.seats} seatProps={seatProps} />
-            )}
+                  ))}
+                </div>
+              ) : (
+                <BayDetail seats={openBay.seats} seatProps={seatProps} />
+              )}
+            </div>
 
             <div className="no-scrollbar mt-5 flex gap-1.5 overflow-x-auto border-t border-[var(--color-line)] pt-4">
               {bays.map((b) => (
@@ -286,7 +293,7 @@ function BayDetail({
     .sort((a, b) => BERTH_ORDER[a.seat_type] - BERTH_ORDER[b.seat_type]);
 
   return (
-    <div className="flex items-start gap-4">
+    <div className="flex w-max items-start gap-3">
       {mains.map((grp, gi) => (
         <div key={gi} className="flex flex-col gap-2">
           {grp.map((s) => (
@@ -296,7 +303,7 @@ function BayDetail({
       ))}
       {sides.length > 0 && (
         <>
-          <span className="mx-2 self-stretch border-l border-dashed border-[var(--color-line-strong)]" />
+          <span className="mx-1.5 self-stretch border-l border-dashed border-[var(--color-line-strong)]" />
           <div className="flex flex-col gap-2">
             {sides.map((s) => (
               <Seat key={s.id} {...seatProps(s)} />

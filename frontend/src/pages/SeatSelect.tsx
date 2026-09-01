@@ -146,8 +146,8 @@ export default function SeatSelect() {
   return (
     <div className="pb-24 lg:pb-0">
       <Stepper current={3} />
-      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-        <div className="space-y-4">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="min-w-0 space-y-4">
           <div className="card p-5">
             <div className="flex flex-wrap items-baseline gap-2">
               <h1 className="text-xl font-bold">{detail.train.name}</h1>
