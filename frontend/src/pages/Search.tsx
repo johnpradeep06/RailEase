@@ -9,7 +9,7 @@ import {
   type RecentSearch,
 } from "../lib/personalization";
 import { Alert, Button, Spinner } from "../components/ui";
-import ImagePlaceholder from "../components/ImagePlaceholder";
+import lightHeroImg from "../assets/lighthero.png";
 
 function today() {
   return new Date().toISOString().slice(0, 10);
@@ -182,7 +182,11 @@ export default function Search() {
       {/* Right rail — how it works */}
       <aside className="hidden lg:block">
         <div className="card overflow-hidden">
-          <ImagePlaceholder label="Booking illustration" aspect="16/11" rounded="rounded-none" />
+          <img
+            src={lightHeroImg}
+            alt="Booking illustration"
+            className="w-full aspect-[16/11] object-cover"
+          />
           <div className="p-5">
             <h2 className="font-bold">How booking works</h2>
             <ol className="mt-3 space-y-3">
