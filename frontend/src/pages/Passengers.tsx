@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
-import type { Gender, PassengerCreate } from "../lib/types";
+import type { Gender, PassengerCreate, PaymentConfig } from "../lib/types";
 import { useBooking } from "../booking/BookingContext";
 import { Alert, Button } from "../components/ui";
 import Stepper from "../components/Stepper";
@@ -33,6 +33,8 @@ export default function Passengers() {
   const [err, setErr] = useState<string | null>(null);
   const [staleSeats, setStale] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [releasing, setReleasing] = useState(false);
+  const [lockMinutes, setLockMinutes] = useState<number | null>(null);
 
   const ready =
     draft.result &&
@@ -46,6 +48,23 @@ export default function Passengers() {
       return;
     }
     setRows(draft.seats.map(blank));
+    api.paymentConfig().then((c: PaymentConfig) => setLockMinutes(c.seat_lock_minutes)).catch(() => {});
+
+    // Coming back from the payment page: the seats are still locked by our own
+    // unpaid booking. Release it first (only if it is really still PENDING — never
+    // touch a booking that has been paid), then a fresh lock is taken on submit.
+    const stale = draft.booking;
+    if (stale) {
+      setReleasing(true);
+      api
+        .booking(stale.id)
+        .then((b) => (b.status === "PENDING" ? api.cancelBooking(b.id) : null))
+        .catch(() => {})
+        .finally(() => {
+          patch({ booking: null });
+          setReleasing(false);
+        });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -81,7 +100,7 @@ export default function Passengers() {
         }),
       });
       patch({ booking });
-      nav("/payment");
+      nav(`/payment/${booking.id}`);
     } catch (e) {
       if (e instanceof ApiError && /no longer available/i.test(e.message))
         setStale(true);
@@ -214,9 +233,17 @@ export default function Passengers() {
             </div>
           ))}
 
-          <Button type="submit" disabled={busy} className="w-full sm:w-auto">
-            {busy ? "Reserving seats…" : "Continue to payment →"}
-          </Button>
+          <div>
+            <Button type="submit" disabled={busy || releasing} className="w-full sm:w-auto">
+              {busy ? "Locking seats…" : releasing ? "Releasing previous hold…" : "Continue to payment →"}
+            </Button>
+            {lockMinutes && (
+              <p className="mt-2 text-xs text-[var(--color-muted)]">
+                Your seats are locked for {lockMinutes} minutes while you pay. If you don't
+                finish, they're released automatically.
+              </p>
+            )}
+          </div>
         </form>
 
         <div className="lg:sticky lg:top-24 lg:self-start">

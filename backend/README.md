@@ -74,6 +74,9 @@ alembic/
    | `JWT_ALGORITHM` | Defaults to `HS256`. |
    | `JWT_EXPIRE_MINUTES` | Access token lifetime in minutes. Defaults to `60`. |
    | `FRONTEND_ORIGINS` | Comma-separated list of allowed CORS origins (e.g. `http://localhost:3000,http://localhost:5173`). |
+   | `SEAT_LOCK_MINUTES` | How long a pending booking keeps its seats locked while the customer pays. Default `10`; use `1` to demo expiry. |
+   | `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | Razorpay **test-mode** keys. Leave blank to use the mock gateway. |
+   | `RAZORPAY_WEBHOOK_SECRET` | Optional — only if you register the webhook in the Razorpay dashboard. |
 
 3. **Connecting to the database**
 
@@ -156,11 +159,20 @@ GitHub repo. Once this is pushed to GitHub, switch the service's source to
 the repo in the Railway dashboard (or via `railway service` /
 `create-deployment`) to get deploys on every push instead.
 
-## Testing the seat-locking guarantee
+## Seat locking & payments
 
-The most important thing to verify after any change to
-`services/booking_service.py`: two concurrent `POST /bookings` requests for
-the *same seat* on the *same schedule* must resolve to exactly one success
-and one `400 "Seat(s) no longer available"` — never two successes. Fire two
-requests at once (e.g. two backgrounded `curl` calls) against a schedule
-with only one free seat left and confirm the split.
+Design, state machine, failure matrix and demo script: [`docs/PAYMENTS_AND_SEAT_LOCKING.md`](../docs/PAYMENTS_AND_SEAT_LOCKING.md).
+
+Two runnable checks (need a seeded database; see `seed.py`):
+
+```bash
+# N users hammer the SAME seat at the same instant — expect exactly one 201 per round, rest 409, no 5xx
+uvicorn app.main:app --port 8001 &
+python race_demo.py --base http://127.0.0.1:8001 --users 10 --rounds 25
+
+# every payment/expiry scenario against the real app + real DB (Razorpay's network call is faked)
+python payment_flow_check.py razorpay     # 45 checks
+python payment_flow_check.py mock         # 16 checks
+```
+
+Run `python seed.py` again whenever the seeded dates run low — it seeds 5 trains with a daily departure for the next 30 days (idempotent).

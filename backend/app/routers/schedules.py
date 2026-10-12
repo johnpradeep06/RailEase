@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, aliased, joinedload
 from .. import models, schemas
 from ..database import get_db
 from ..deps import get_current_admin
+from ..services import booking_service
 
 router = APIRouter(prefix="/schedules", tags=["schedules"])
 
@@ -19,6 +20,7 @@ def search_schedules(
     journey_date: date,
     db: Session = Depends(get_db),
 ):
+    booking_service.expire_stale_holds(db)  # expired locks must not count as taken
     source_station = db.query(models.Station).filter(models.Station.station_code == source).first()
     destination_station = (
         db.query(models.Station).filter(models.Station.station_code == destination).first()
@@ -117,6 +119,7 @@ def get_seat_map(
     coach_type: models.CoachType | None = None,
     db: Session = Depends(get_db),
 ):
+    booking_service.expire_stale_holds(db)  # expired locks must not count as taken
     schedule = db.get(models.Schedule, schedule_id)
     if schedule is None:
         raise HTTPException(status_code=404, detail="Schedule not found")

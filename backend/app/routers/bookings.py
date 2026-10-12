@@ -31,6 +31,7 @@ def create_booking(
 def list_my_bookings(
     db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)
 ):
+    booking_service.expire_stale_holds(db)
     return (
         _booking_query(db)
         .filter(models.Booking.user_id == current_user.id)
@@ -45,6 +46,7 @@ def get_booking(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
+    booking_service.expire_stale_holds(db)
     booking = _booking_query(db).filter(models.Booking.id == booking_id).first()
     if booking is None:
         raise HTTPException(status_code=404, detail="Booking not found")

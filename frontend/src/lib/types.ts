@@ -17,9 +17,14 @@ export type BerthPreference =
   | "SIDE_LOWER"
   | "SIDE_UPPER"
   | "NO_PREFERENCE";
-export type BookingStatus = "PENDING" | "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+export type BookingStatus =
+  | "PENDING"
+  | "CONFIRMED"
+  | "WAITLISTED"
+  | "CANCELLED"
+  | "EXPIRED";
 export type BookingSeatStatus = "RESERVED" | "CONFIRMED" | "CANCELLED";
-export type PaymentMethod = "UPI" | "CARD" | "NET_BANKING" | "WALLET";
+export type PaymentMethod = "UPI" | "CARD" | "NET_BANKING" | "WALLET" | "OTHER";
 export type PaymentStatus = "PENDING" | "SUCCESS" | "FAILED" | "REFUNDED";
 export type TicketStatus = "ACTIVE" | "CANCELLED";
 export type ScheduleStatus = "SCHEDULED" | "CANCELLED" | "COMPLETED";
@@ -188,6 +193,8 @@ export interface BookingOut {
   booking_date: string | null;
   total_amount: string;
   status: BookingStatus;
+  /** seat-lock deadline while status is PENDING */
+  expires_at: string | null;
   passengers: PassengerOut[];
   booking_seats: BookingSeatOut[];
 }
@@ -197,9 +204,33 @@ export interface PaymentOut {
   booking_id: string;
   payment_reference: string;
   amount: string;
-  payment_method: PaymentMethod;
+  payment_method: PaymentMethod | null;
   payment_status: PaymentStatus;
   transaction_time: string | null;
+  razorpay_order_id: string | null;
+  razorpay_payment_id: string | null;
+  failure_reason: string | null;
+}
+
+export interface PaymentConfig {
+  provider: "razorpay" | "mock";
+  key_id: string | null;
+  seat_lock_minutes: number;
+}
+
+export interface PaymentOrder {
+  key_id: string;
+  order_id: string;
+  amount: number; // paise
+  currency: string;
+  booking_reference: string;
+  expires_at: string | null;
+}
+
+export interface RazorpayVerifyPayload {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
 }
 
 export interface TicketOut {

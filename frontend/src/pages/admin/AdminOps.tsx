@@ -70,7 +70,7 @@ function Bookings() {
       {booking && (
         <div className="mt-4 space-y-3">
           <TicketCard booking={booking} ticket={ticket} schedule={schedule} />
-          {booking.status !== "CANCELLED" && (
+          {booking.status !== "CANCELLED" && booking.status !== "EXPIRED" && (
             <Button variant="ghost" disabled={busy} onClick={cancel}>
               {busy ? "Cancelling…" : "Cancel this booking"}
             </Button>

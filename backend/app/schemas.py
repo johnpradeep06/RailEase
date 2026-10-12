@@ -1,6 +1,7 @@
 from datetime import date, datetime, time
 from decimal import Decimal
 from enum import Enum
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -306,6 +307,7 @@ class BookingOut(ORMModel):
     booking_date: datetime | None
     total_amount: Decimal
     status: BookingStatus
+    expires_at: datetime | None  # seat-lock deadline while PENDING
     passengers: list[PassengerOut]
     booking_seats: list[BookingSeatOut]
 
@@ -316,6 +318,8 @@ class BookingOut(ORMModel):
 
 
 class PaymentCreate(BaseModel):
+    """Mock-gateway payment (only used when Razorpay is not configured)."""
+
     payment_method: PaymentMethod
 
 
@@ -324,9 +328,38 @@ class PaymentOut(ORMModel):
     booking_id: UUID
     payment_reference: str
     amount: Decimal
-    payment_method: PaymentMethod
+    payment_method: PaymentMethod | None
     payment_status: PaymentStatus
     transaction_time: datetime | None
+    razorpay_order_id: str | None
+    razorpay_payment_id: str | None
+    failure_reason: str | None
+
+
+class PaymentConfig(BaseModel):
+    provider: Literal["razorpay", "mock"]
+    key_id: str | None = None  # public Razorpay key id (safe to expose)
+    seat_lock_minutes: int
+
+
+class PaymentOrderOut(BaseModel):
+    key_id: str
+    order_id: str
+    amount: int  # paise
+    currency: str
+    booking_reference: str
+    expires_at: datetime | None
+
+
+class PaymentVerify(BaseModel):
+    razorpay_order_id: str = Field(max_length=64)
+    razorpay_payment_id: str = Field(max_length=64)
+    razorpay_signature: str = Field(max_length=256)
+
+
+class PaymentCancel(BaseModel):
+    reason: Literal["cancelled", "failed"] = "cancelled"
+    detail: str | None = Field(default=None, max_length=300)
 
 
 # ---------------------------------------------------------------------------

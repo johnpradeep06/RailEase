@@ -5,8 +5,11 @@ import type {
   CoachType,
   FeedbackOut,
   PassengerCreate,
+  PaymentConfig,
   PaymentMethod,
+  PaymentOrder,
   PaymentOut,
+  RazorpayVerifyPayload,
   Route,
   RouteStopInput,
   ScheduleDetail,
@@ -144,8 +147,26 @@ export const api = {
   cancelBooking: (id: string) =>
     request<BookingOut>(`/bookings/${id}`, { method: "DELETE" }),
 
+  // mock gateway (only enabled server-side when Razorpay keys are absent)
   pay: (bookingId: string, payment_method: PaymentMethod) =>
     request<PaymentOut>(`/bookings/${bookingId}/pay`, { body: { payment_method } }),
+
+  // razorpay
+  paymentConfig: () => request<PaymentConfig>("/payments/config", { auth: false }),
+  createPaymentOrder: (bookingId: string) =>
+    request<PaymentOrder>(`/bookings/${bookingId}/pay/order`, { method: "POST" }),
+  verifyPayment: (bookingId: string, payload: RazorpayVerifyPayload) =>
+    request<PaymentOut>(`/bookings/${bookingId}/pay/verify`, { body: payload }),
+  reconcilePayment: (bookingId: string) =>
+    request<BookingOut>(`/bookings/${bookingId}/pay/reconcile`, { method: "POST" }),
+  cancelPayment: (
+    bookingId: string,
+    reason: "cancelled" | "failed",
+    detail?: string,
+  ) =>
+    request<BookingOut>(`/bookings/${bookingId}/pay/cancel`, {
+      body: { reason, detail: detail ?? null },
+    }),
 
   ticket: (bookingId: string) => request<TicketOut>(`/tickets/${bookingId}`),
 

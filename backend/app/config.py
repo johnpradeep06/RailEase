@@ -17,6 +17,19 @@ class Settings:
         if origin.strip()
     ]
 
+    # How long a PENDING booking keeps its seats locked while the user pays.
+    seat_lock_minutes: int = int(os.getenv("SEAT_LOCK_MINUTES", "10"))
+
+    # Razorpay (use rzp_test_* keys for the demo). Leave blank to fall back to
+    # the mock gateway.
+    razorpay_key_id: str = os.getenv("RAZORPAY_KEY_ID", "")
+    razorpay_key_secret: str = os.getenv("RAZORPAY_KEY_SECRET", "")
+    razorpay_webhook_secret: str = os.getenv("RAZORPAY_WEBHOOK_SECRET", "")
+
+    @property
+    def razorpay_enabled(self) -> bool:
+        return bool(self.razorpay_key_id and self.razorpay_key_secret)
+
 
 @lru_cache
 def get_settings() -> Settings:

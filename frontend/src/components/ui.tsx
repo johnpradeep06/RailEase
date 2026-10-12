@@ -1,4 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { useCountdown } from "../lib/useCountdown";
+import type { BookingStatus } from "../lib/types";
 
 export function Spinner({ label }: { label?: string }) {
   return (
@@ -112,5 +114,21 @@ export function EmptyState({
       </div>
       {action}
     </div>
+  );
+}
+
+/** Pill colour for a booking status (EXPIRED / CANCELLED read as "gone"). */
+export function bookingTone(status: BookingStatus): "ok" | "danger" | "warn" {
+  return status === "CONFIRMED" ? "ok" : status === "CANCELLED" || status === "EXPIRED" ? "danger" : "warn";
+}
+
+/** Live "mm:ss" until a pending booking's seat lock runs out. */
+export function HoldTimer({ deadline }: { deadline: string | null }) {
+  const { label, secs } = useCountdown(deadline);
+  if (secs === null) return null;
+  return (
+    <span className={`tabular-nums font-semibold ${secs <= 120 ? "text-[var(--color-danger)]" : ""}`}>
+      {label}
+    </span>
   );
 }

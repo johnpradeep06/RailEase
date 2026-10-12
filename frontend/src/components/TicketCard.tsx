@@ -1,5 +1,5 @@
 import type { BookingOut, ScheduleDetail, TicketOut } from "../lib/types";
-import { Pill } from "./ui";
+import { Pill, bookingTone } from "./ui";
 import { dayMonth, hhmm, inr } from "../lib/format";
 
 export default function TicketCard({
@@ -51,15 +51,7 @@ export default function TicketCard({
           </>
         )}
         <Info label="Status">
-          <Pill
-            tone={
-              booking.status === "CONFIRMED"
-                ? "ok"
-                : booking.status === "CANCELLED"
-                  ? "danger"
-                  : "warn"
-            }
-          >
+          <Pill tone={bookingTone(booking.status)}>
             {booking.status}
           </Pill>
         </Info>

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api } from "../lib/api";
 import type { BookingOut, ScheduleDetail, TicketOut } from "../lib/types";
-import { Alert, Button, Spinner } from "../components/ui";
+import { Alert, Button, HoldTimer, Spinner } from "../components/ui";
 import TicketCard from "../components/TicketCard";
 
 export default function TripDetail() {
@@ -57,12 +57,22 @@ export default function TripDetail() {
       >
         ← All trips
       </button>
+      {booking.status === "PENDING" && (
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-[var(--color-line)] bg-[var(--color-accent-soft)] px-4 py-3">
+          <div className="text-sm">
+            <b>Payment pending</b> — seats held for <HoldTimer deadline={booking.expires_at} />
+          </div>
+          <Link to={`/payment/${booking.id}`}>
+            <Button size="sm">Pay now</Button>
+          </Link>
+        </div>
+      )}
       <TicketCard booking={booking} ticket={ticket} schedule={schedule} />
       <div className="mt-6 flex justify-between">
         <Link to="/feedback">
           <Button variant="ghost">Leave feedback</Button>
         </Link>
-        {booking.status !== "CANCELLED" && (
+        {booking.status !== "CANCELLED" && booking.status !== "EXPIRED" && (
           <Button variant="ghost" disabled={busy} onClick={cancel}>
             {busy ? "Cancelling…" : "Cancel booking"}
           </Button>

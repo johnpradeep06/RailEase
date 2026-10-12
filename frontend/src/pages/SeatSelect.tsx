@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import type { CoachSeatMap, ScheduleDetail, SeatMapEntry } from "../lib/types";
@@ -21,6 +21,9 @@ export default function SeatSelect() {
   const [selected, setSelected] = useState<SelectedSeat[]>(draft.seats);
   const [srcId, setSrcId] = useState<string | null>(draft.sourceStationId);
   const [dstId, setDstId] = useState<string | null>(draft.destStationId);
+  const [notice, setNotice] = useState<string | null>(null);
+  const selectedRef = useRef(selected);
+  selectedRef.current = selected;
 
   const { result, coachType } = draft;
 
@@ -45,6 +48,37 @@ export default function SeatSelect() {
       .catch((e) => setErr(e.message));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result?.id, coachType]);
+
+  // Live availability: other customers' bookings (and released locks) show up
+  // within a few seconds; a seat that gets taken drops out of the selection.
+  useEffect(() => {
+    if (!result || !coachType || !maps) return;
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
+      api
+        .seatMap(result.id, coachType)
+        .then((fresh) => {
+          setMaps(fresh);
+          const taken = new Set(
+            fresh.flatMap((m) => m.seats.filter((x) => x.status === "TAKEN").map((x) => x.id)),
+          );
+          const lost = selectedRef.current.filter((x) => taken.has(x.id));
+          if (lost.length) {
+            setSelected((cur) => cur.filter((x) => !taken.has(x.id)));
+            setNotice(
+              `${lost.map((x) => x.seat_number).join(", ")} ${lost.length > 1 ? "were" : "was"} just booked by someone else and removed from your selection.`,
+            );
+          }
+        })
+        .catch(() => {});
+    };
+    const timer = setInterval(refresh, 8000);
+    document.addEventListener("visibilitychange", refresh); // catch up as soon as the tab is back
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [result, coachType, maps !== null]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeMap = useMemo(
     () => maps?.find((m) => m.coach_id === coachId) ?? null,
@@ -146,6 +180,16 @@ export default function SeatSelect() {
   return (
     <div className="pb-24 lg:pb-0">
       <Stepper current={3} />
+      {notice && (
+        <div className="mb-4">
+          <Alert tone="warn">
+            {notice}{" "}
+            <button onClick={() => setNotice(null)} className="font-semibold underline">
+              Dismiss
+            </button>
+          </Alert>
+        </div>
+      )}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0 space-y-4">
           <div className="card p-5">

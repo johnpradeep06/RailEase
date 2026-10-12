@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import type { BookingOut, ScheduleDetail } from "../lib/types";
-import { Alert, Button, EmptyState, Pill, Spinner } from "../components/ui";
+import { Alert, Button, EmptyState, HoldTimer, Pill, Spinner, bookingTone } from "../components/ui";
 import { dayMonth, hhmm, inr } from "../lib/format";
 
 type Filter = "all" | "upcoming" | "past" | "cancelled";
@@ -59,9 +59,10 @@ export default function MyTrips() {
     return bookings.filter((b) => {
       const dep = schedules[b.schedule_id]?.departure_time;
       const future = dep ? new Date(dep).getTime() > now : true;
-      if (filter === "cancelled") return b.status === "CANCELLED";
-      if (filter === "upcoming") return b.status !== "CANCELLED" && future;
-      if (filter === "past") return b.status !== "CANCELLED" && !future;
+      const dead = b.status === "CANCELLED" || b.status === "EXPIRED";
+      if (filter === "cancelled") return dead;
+      if (filter === "upcoming") return !dead && future;
+      if (filter === "past") return !dead && !future;
       return true;
     });
   }, [bookings, schedules, filter]);
@@ -121,15 +122,7 @@ export default function MyTrips() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-bold">{s?.train.name ?? "Train"}</span>
-                      <Pill
-                        tone={
-                          b.status === "CONFIRMED"
-                            ? "ok"
-                            : b.status === "CANCELLED"
-                              ? "danger"
-                              : "warn"
-                        }
-                      >
+                      <Pill tone={bookingTone(b.status)}>
                         {b.status}
                       </Pill>
                     </div>
@@ -143,13 +136,30 @@ export default function MyTrips() {
                   </div>
                   <div className="text-right">
                     <div className="font-bold">{inr(b.total_amount)}</div>
-                    <div className="mt-2 flex gap-2">
+                    {b.status === "PENDING" && (
+                      <div className="mt-1 text-xs text-[var(--color-muted)]">
+                        Pay within <HoldTimer deadline={b.expires_at} />
+                      </div>
+                    )}
+                    <div className="mt-2 flex flex-wrap justify-end gap-2">
+                      {b.status === "PENDING" && (
+                        <Link to={`/payment/${b.id}`}>
+                          <Button size="sm">Complete payment</Button>
+                        </Link>
+                      )}
+                      {b.status === "EXPIRED" && (
+                        <Link to={`/payment/${b.id}`} title="Paid but didn't get a ticket? We'll check with Razorpay.">
+                          <Button variant="ghost" size="sm">
+                            Check payment
+                          </Button>
+                        </Link>
+                      )}
                       <Link to={`/trips/${b.id}`}>
                         <Button variant="ghost" size="sm">
                           View
                         </Button>
                       </Link>
-                      {b.status !== "CANCELLED" && (
+                      {b.status !== "CANCELLED" && b.status !== "EXPIRED" && (
                         <Button
                           variant="ghost"
                           size="sm"

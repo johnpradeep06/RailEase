@@ -73,10 +73,11 @@ class SeatType(str, enum.Enum):
 
 
 class BookingStatus(str, enum.Enum):
-    PENDING = "PENDING"
+    PENDING = "PENDING"  # seats locked, awaiting payment (see Booking.expires_at)
     CONFIRMED = "CONFIRMED"
     WAITLISTED = "WAITLISTED"
     CANCELLED = "CANCELLED"
+    EXPIRED = "EXPIRED"  # seat lock lapsed before payment completed
 
 
 class Gender(str, enum.Enum):
@@ -105,6 +106,7 @@ class PaymentMethod(str, enum.Enum):
     CARD = "CARD"
     NET_BANKING = "NET_BANKING"
     WALLET = "WALLET"
+    OTHER = "OTHER"  # EMI / pay-later / etc. reported by the gateway
 
 
 class PaymentStatus(str, enum.Enum):
@@ -308,6 +310,8 @@ class Booking(Base):
     booking_date = Column(DateTime(timezone=True), server_default=func.now())
     total_amount = Column(Numeric(10, 2), nullable=False)
     status = Column(pg_enum(BookingStatus, "booking_status"), nullable=False, default=BookingStatus.PENDING)
+    # Deadline for paying a PENDING booking; after it the seats are released.
+    expires_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -382,11 +386,18 @@ class Payment(Base):
     booking_id = Column(UUID(as_uuid=True), ForeignKey("bookings.id"), nullable=False)
     payment_reference = Column(String(100), unique=True, nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
-    payment_method = Column(pg_enum(PaymentMethod, "payment_method"), nullable=False)
+    # Unknown until the customer picks a method inside Razorpay Checkout; filled
+    # from the gateway's own record once the payment is verified.
+    payment_method = Column(pg_enum(PaymentMethod, "payment_method"), nullable=True)
     payment_status = Column(
         pg_enum(PaymentStatus, "payment_status"), nullable=False, default=PaymentStatus.PENDING
     )
     transaction_time = Column(DateTime(timezone=True))
+    # Razorpay linkage. The unique indexes also make a payment id replay-proof:
+    # one gateway payment can never be applied to two bookings.
+    razorpay_order_id = Column(String(64), unique=True, nullable=True)
+    razorpay_payment_id = Column(String(64), unique=True, nullable=True)
+    failure_reason = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
